@@ -1,10 +1,12 @@
 created: 20130302085406905
 modified: 20130302084548184
-tags: examples
+tags: Examples
 title: "A Thesis Notebook" by Alberto Molina
 url: http://tesis.tiddlyspot.com/
 
 A thesis notebook based on TiddlyWiki.
+
+{{!!url}}
 
 <<<
 This is an example of a thesis notebook powered by TiddlyWiki 5.0.8-beta.

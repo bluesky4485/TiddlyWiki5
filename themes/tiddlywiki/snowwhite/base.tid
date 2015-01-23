@@ -1,10 +1,21 @@
 title: $:/themes/tiddlywiki/snowwhite/base
-tags: [[$:/tags/stylesheet]]
+tags: [[$:/tags/Stylesheet]]
 
 \rules only filteredtranscludeinline transcludeinline macrodef macrocallinline
 
 .tc-sidebar-header {
 	text-shadow: 0 1px 0 <<colour sidebar-foreground-shadow>>;
+}
+
+.tc-tiddler-title {
+  position: -webkit-sticky;
+  position: -moz-sticky;
+  position: -o-sticky;
+  position: -ms-sticky;
+  position: sticky;
+  top: 0px;
+  background: <<colour tiddler-background>>;
+  z-index: 500;
 }
 
 .tc-tiddler-info {

@@ -1,10 +1,11 @@
 {
+	"description": "Documentation from http://tiddlywiki.com",
 	"plugins": [
-		"tiddlywiki/cecily",
 		"tiddlywiki/googleanalytics",
 		"tiddlywiki/nodewebkitsaver",
 		"tiddlywiki/github-fork-ribbon",
-		"tiddlywiki/browser-sniff"
+		"tiddlywiki/browser-sniff",
+                "tiddlywiki/railroad"
 	],
 	"themes": [
 		"tiddlywiki/vanilla",
@@ -12,20 +13,25 @@
 		"tiddlywiki/nighttime",
 		"tiddlywiki/starlight",
 		"tiddlywiki/seamless",
-		"tiddlywiki/stickytitles",
 		"tiddlywiki/centralised",
 		"tiddlywiki/readonly"
 	],
 	"languages": [
+		"da-DK",
+	    "el-GR",
 		"en-US",
 		"en-GB",
 		"de-AT",
 		"de-DE",
+		"es-ES",
 		"fr-FR",
+		"nl-NL",
 		"zh-Hans",
 		"zh-Hant",
 		"it-IT",
-		"ja-JP"
+		"ja-JP",
+		"cs-CZ",
+		"ru-RU"
 	],
 	"build": {
 		"index": [
@@ -42,6 +48,7 @@
 			"--savetiddler","$:/green_favicon.ico","static/favicon.ico"],
 		"readmes": [
 			"--rendertiddler","ReadMe","readme.md","text/html",
+			"--rendertiddler","ReadMeBinFolder","bin/readme.md","text/html",
 			"--rendertiddler","ContributingTemplate","contributing.md","text/html",
 			"--rendertiddler","$:/core/copyright.txt","licenses/copyright.md","text/plain"],
 		"tw2": [

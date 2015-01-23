@@ -162,3 +162,47 @@ Daniel Rodriguez Rivero, @danielo515, 2014/04/18
 Jonathan Lister, @jayfresh, 2014/06/23
 
 Stephan Sokolow, @ssokolow, 2014/07/15
+
+Dave Gifford, @giffmex, 2014/09/05
+
+Eucaly J, @Eucaly, 2014/09/14
+
+Mal Gamble, @malgam, 2014/09/19
+
+Ton Gerner, @gernert, 2014/09/19
+
+Julie Bertrand, @Evolena, 2014/09/22
+
+Andrey Yankin, @andrey013, 2014/09/30
+
+David john, @fghhfg, 2014/10/06
+
+Mark S., @marxsal, 2014/10/18
+
+Erwan Moreau, @erwanm, 2014/10/27
+
+Felix Küppers, @felixhayashi, 2014/11/02
+
+Roma Hicks, @roma0104, 2014/11/18
+
+Jedediah Carty, @inmysocks, 2014/11/21
+
+Erwan Dano, @Braincoke, 2014/11/24
+
+Jim Lehmer, @dullroar, 2014/12/07
+
+Aurelien Navarre, @anavarre, 2014/12/15
+
+Astrid Elocson, @aelocson, 2014/12/21
+
+Andreas Hahn, @Drakor, 2014/12/21
+
+Jean-Charles Longuet, @Jc-L, 2014/12/22
+
+Evgeniy Gryaznov, @evgeniy-gryaznov, 2014/12/23
+
+Andrew Harrison, @infurnoape, 2014/12/27
+
+Arlen Beiler, @arlen22, 2014/12/30
+
+David P Dannemiller, @dpdannemiller, 2015/01/10

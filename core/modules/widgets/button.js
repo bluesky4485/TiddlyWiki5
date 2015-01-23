@@ -36,22 +36,26 @@ ButtonWidget.prototype.render = function(parent,nextSibling) {
 	// Create element
 	var domNode = this.document.createElement("button");
 	// Assign classes
-	var classes = this["class"].split(" ") || [];
+	var classes = this["class"].split(" ") || [],
+		isPoppedUp = this.popup && this.isPoppedUp();
 	if(this.selectedClass) {
 		if(this.set && this.setTo && this.isSelected()) {
 			$tw.utils.pushTop(classes,this.selectedClass.split(" "));
 		}
-		if(this.popup && this.isPoppedUp()) {
+		if(isPoppedUp) {
 			$tw.utils.pushTop(classes,this.selectedClass.split(" "));
 		}
+	}
+	if(isPoppedUp) {
+		$tw.utils.pushTop(classes,"tc-popup-handle");
 	}
 	domNode.className = classes.join(" ");
 	// Assign other attributes
 	if(this.style) {
 		domNode.setAttribute("style",this.style);
 	}
-	if(this.title) {
-		domNode.setAttribute("title",this.title);
+	if(this.tooltip) {
+		domNode.setAttribute("title",this.tooltip);
 	}
 	if(this["aria-label"]) {
 		domNode.setAttribute("aria-label",this["aria-label"]);
@@ -59,6 +63,9 @@ ButtonWidget.prototype.render = function(parent,nextSibling) {
 	// Add a click event handler
 	domNode.addEventListener("click",function (event) {
 		var handled = false;
+		if(self.invokeActions(event)) {
+			handled = true;
+		}
 		if(self.to) {
 			self.navigateTo(event);
 			handled = true;
@@ -87,6 +94,10 @@ ButtonWidget.prototype.render = function(parent,nextSibling) {
 	this.domNodes.push(domNode);
 };
 
+ButtonWidget.prototype.getBoundingClientRect = function() {
+	return this.domNodes[0].getBoundingClientRect();
+}
+
 ButtonWidget.prototype.isSelected = function() {
 	var tiddler = this.wiki.getTiddler(this.set);
 	return tiddler ? tiddler.fields.text === this.setTo : this.defaultSetValue === this.setTo;
@@ -94,12 +105,12 @@ ButtonWidget.prototype.isSelected = function() {
 
 ButtonWidget.prototype.isPoppedUp = function() {
 	var tiddler = this.wiki.getTiddler(this.popup);
-	var result = tiddler && tiddler.fields.text ? $tw.popup.readPopupState(this.popup,tiddler.fields.text) : false;
+	var result = tiddler && tiddler.fields.text ? $tw.popup.readPopupState(tiddler.fields.text) : false;
 	return result;
 };
 
 ButtonWidget.prototype.navigateTo = function(event) {
-	var bounds = this.domNodes[0].getBoundingClientRect();
+	var bounds = this.getBoundingClientRect();
 	this.dispatchEvent({
 		type: "tm-navigate",
 		navigateTo: this.to,
@@ -141,7 +152,7 @@ ButtonWidget.prototype.execute = function() {
 	this.hover = this.getAttribute("hover");
 	this["class"] = this.getAttribute("class","");
 	this["aria-label"] = this.getAttribute("aria-label");
-	this.title = this.getAttribute("title");
+	this.tooltip = this.getAttribute("tooltip");
 	this.style = this.getAttribute("style");
 	this.selectedClass = this.getAttribute("selectedClass");
 	this.defaultSetValue = this.getAttribute("default");

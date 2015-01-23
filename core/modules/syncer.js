@@ -39,14 +39,14 @@ function Syncer(options) {
 	// Browser event handlers
 	if($tw.browser) {
 		// Set up our beforeunload handler
-		window.addEventListener("beforeunload",function(event) {
+		window.onbeforeunload = function(event) {
 			var confirmationMessage;
 			if(self.isDirty()) {
 				confirmationMessage = $tw.language.getString("UnsavedChangesWarning");
 				event.returnValue = confirmationMessage; // Gecko
 			}
 			return confirmationMessage;
-		});
+		};
 		// Listen out for login/logout/refresh events in the browser
 		$tw.rootWidget.addEventListener("tm-login",function() {
 			self.handleLoginEvent();
@@ -63,7 +63,7 @@ function Syncer(options) {
 		self.handleLazyLoadEvent(title);
 	});
 	// Get the login status
-	this.getStatus(function (err,isLoggedIn) {
+	this.getStatus(function(err,isLoggedIn) {
 		// Do a sync from the server
 		self.syncFromServer();
 	});
@@ -173,7 +173,7 @@ Syncer.prototype.syncFromServer = function() {
 			this.pollTimerId = null;
 		}
 		this.syncadaptor.getSkinnyTiddlers(function(err,tiddlers) {
-			// Trigger another sync
+			// Trigger the next sync
 			self.pollTimerId = setTimeout(function() {
 				self.pollTimerId = null;
 				self.syncFromServer.call(self);
@@ -467,6 +467,8 @@ Syncer.prototype.dispatchTask = function(task,callback) {
 				};
 				// Invoke the callback
 				callback(null);
+			},{
+				tiddlerInfo: self.tiddlerInfo[task.title]
 			});
 		} else {
 			this.logger.log(" Not Dispatching 'save' task:",task.title,"tiddler does not exist");
@@ -493,6 +495,7 @@ Syncer.prototype.dispatchTask = function(task,callback) {
 			if(err) {
 				return callback(err);
 			}
+			delete self.tiddlerInfo[task.title];
 			// Invoke the callback
 			callback(null);
 		},{

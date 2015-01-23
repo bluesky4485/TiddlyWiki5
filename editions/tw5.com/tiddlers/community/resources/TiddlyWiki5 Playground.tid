@@ -1,11 +1,13 @@
 created: 20140315085406905
 modified: 20140321084548184
-tags: resources
+tags: Resources
 title: "TiddlyWiki5 Playground" by Ton Gerner
 type: text/vnd.tiddlywiki
 url: http://tongerner.tiddlyspot.com/
 
 Huge collection of customisations and tweaks from Ton Gerner.
+
+{{!!url}}
 
 <<<
 I am a longtime user of TiddlyWiki Classic and still use it daily since you can't do everything in TiddlyWiki 5 (yet) ;)

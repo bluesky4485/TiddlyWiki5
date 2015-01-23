@@ -106,8 +106,8 @@ LinkWidget.prototype.renderLink = function(parent,nextSibling) {
 	this.domNodes.push(domNode);
 };
 
-LinkWidget.prototype.handleClickEvent = function (event) {
-	// Send the click on it's way as a navigate event
+LinkWidget.prototype.handleClickEvent = function(event) {
+	// Send the click on its way as a navigate event
 	var bounds = this.domNodes[0].getBoundingClientRect();
 	this.dispatchEvent({
 		type: "tm-navigate",
@@ -124,56 +124,61 @@ LinkWidget.prototype.handleClickEvent = function (event) {
 };
 
 LinkWidget.prototype.handleDragStartEvent = function(event) {
-	if(this.to) {
-		// Set the dragging class on the element being dragged
-		$tw.utils.addClass(event.target,"tc-tiddlylink-dragging");
-		// Create the drag image elements
-		this.dragImage = this.document.createElement("div");
-		this.dragImage.className = "tc-tiddler-dragger";
-		var inner = this.document.createElement("div");
-		inner.className = "tc-tiddler-dragger-inner";
-		inner.appendChild(this.document.createTextNode(this.to));
-		this.dragImage.appendChild(inner);
-		this.document.body.appendChild(this.dragImage);
-		// Astoundingly, we need to cover the dragger up: http://www.kryogenix.org/code/browser/custom-drag-image.html
-		var cover = this.document.createElement("div");
-		cover.className = "tc-tiddler-dragger-cover";
-		cover.style.left = (inner.offsetLeft - 16) + "px";
-		cover.style.top = (inner.offsetTop - 16) + "px";
-		cover.style.width = (inner.offsetWidth + 32) + "px";
-		cover.style.height = (inner.offsetHeight + 32) + "px";
-		this.dragImage.appendChild(cover);
-		// Set the data transfer properties
-		var dataTransfer = event.dataTransfer;
-		// First the image
-		dataTransfer.effectAllowed = "copy";
-		if(dataTransfer.setDragImage) {
-			dataTransfer.setDragImage(this.dragImage.firstChild,-16,-16);
+	if(event.target === this.domNodes[0]) {
+		if(this.to) {
+			// Set the dragging class on the element being dragged
+			$tw.utils.addClass(event.target,"tc-tiddlylink-dragging");
+			// Create the drag image elements
+			this.dragImage = this.document.createElement("div");
+			this.dragImage.className = "tc-tiddler-dragger";
+			var inner = this.document.createElement("div");
+			inner.className = "tc-tiddler-dragger-inner";
+			inner.appendChild(this.document.createTextNode(this.to));
+			this.dragImage.appendChild(inner);
+			this.document.body.appendChild(this.dragImage);
+			// Astoundingly, we need to cover the dragger up: http://www.kryogenix.org/code/browser/custom-drag-image.html
+			var cover = this.document.createElement("div");
+			cover.className = "tc-tiddler-dragger-cover";
+			cover.style.left = (inner.offsetLeft - 16) + "px";
+			cover.style.top = (inner.offsetTop - 16) + "px";
+			cover.style.width = (inner.offsetWidth + 32) + "px";
+			cover.style.height = (inner.offsetHeight + 32) + "px";
+			this.dragImage.appendChild(cover);
+			// Set the data transfer properties
+			var dataTransfer = event.dataTransfer;
+			// First the image
+			dataTransfer.effectAllowed = "copy";
+			if(dataTransfer.setDragImage) {
+				dataTransfer.setDragImage(this.dragImage.firstChild,-16,-16);
+			}
+			// Then the data
+			dataTransfer.clearData();
+			var jsonData = this.wiki.getTiddlerAsJson(this.to),
+				textData = this.wiki.getTiddlerText(this.to,""),
+				title = (new RegExp("^" + $tw.config.textPrimitives.wikiLink + "$","mg")).exec(this.to) ? this.to : "[[" + this.to + "]]";
+			// IE doesn't like these content types
+			if(!$tw.browser.isIE) {
+				dataTransfer.setData("text/vnd.tiddler",jsonData);
+				dataTransfer.setData("text/plain",title);
+				dataTransfer.setData("text/x-moz-url","data:text/vnd.tiddler," + encodeURI(jsonData));
+			}
+			dataTransfer.setData("URL","data:text/vnd.tiddler," + encodeURI(jsonData));
+			dataTransfer.setData("Text",title);
+			event.stopPropagation();
+		} else {
+			event.preventDefault();
 		}
-		// Then the data
-		dataTransfer.clearData();
-		var jsonData = this.wiki.getTiddlerAsJson(this.to),
-			textData = this.wiki.getTiddlerText(this.to,"");
-		// IE doesn't like these content types
-		if(!$tw.browser.isIE) {
-			dataTransfer.setData("text/vnd.tiddler",jsonData);
-			dataTransfer.setData("text/plain",textData);
-			dataTransfer.setData("text/x-moz-url","data:text/vnd.tiddler," + encodeURI(jsonData));
-		}
-		dataTransfer.setData("URL","data:text/vnd.tiddler," + encodeURI(jsonData));
-		dataTransfer.setData("Text",textData);
-		event.stopPropagation();
-	} else {
-		event.preventDefault();
 	}
 };
 
 LinkWidget.prototype.handleDragEndEvent = function(event) {
-	// Remove the dragging class on the element being dragged
-	$tw.utils.removeClass(event.target,"tc-tiddlylink-dragging");
-	// Delete the drag image element
-	if(this.dragImage) {
-		this.dragImage.parentNode.removeChild(this.dragImage);
+	if(event.target === this.domNodes[0]) {
+		// Remove the dragging class on the element being dragged
+		$tw.utils.removeClass(event.target,"tc-tiddlylink-dragging");
+		// Delete the drag image element
+		if(this.dragImage) {
+			this.dragImage.parentNode.removeChild(this.dragImage);
+		}
 	}
 };
 

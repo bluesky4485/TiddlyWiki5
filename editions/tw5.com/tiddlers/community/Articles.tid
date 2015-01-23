@@ -1,20 +1,18 @@
 created: 20140320230543190
 modified: 20140320231444981
-tags: introduction community
+tags: Community
 title: Articles
 type: text/vnd.tiddlywiki
 
-Submit new entries to this collection of articles via GitHub, Twitter or by posting in the [[TiddlyWiki Groups]].
+Here are some recent articles written about ~TiddlyWiki. Submit new articles via GitHub, Twitter or by posting in the [[TiddlyWiki Groups]].
 
 <div class="tc-link-info">
 
-<$list filter="[tag[articles]!sort[modified]]">
+<$list filter="[tag[Articles]!sort[modified]]">
 
 <div class="tc-link-info-item">
 
 ! <$link><$view field="title"/></$link>
-
-!!! <a href={{!!url}} target="_blank"><$text text={{!!url}}/></a>
 
 <div class="tc-subtitle">Posted <$view field="modified" format="relativedate"/></div>
 

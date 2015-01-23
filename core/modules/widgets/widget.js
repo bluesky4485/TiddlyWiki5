@@ -171,7 +171,7 @@ Widget.prototype.evaluateMacroModule = function(name,actualParams,defaultValue) 
 		else for(var i=0; i<actualParams.length; ++i) {
 			args.push(actualParams[i].value);
 		}
-		return macro.run.apply(this,args);
+		return (macro.run.apply(this,args) || "").toString();
 	} else {
 		return defaultValue;
 	}
@@ -204,7 +204,7 @@ Widget.prototype.getStateQualifier = function(name) {
 		}
 		node = node.parentWidget;
 	}
-	return "{" + $tw.utils.hashString(output.join("")) + "}";
+	return $tw.utils.hashString(output.join(""));
 };
 
 /*
@@ -473,6 +473,20 @@ Widget.prototype.removeChildDomNodes = function() {
 			childWidget.removeChildDomNodes();
 		});
 	}
+};
+
+/*
+Invoke any action widgets that are immediate children of this widget
+*/
+Widget.prototype.invokeActions = function(event) {
+	var handled = false;
+	for(var t=0; t<this.children.length; t++) {
+		var child = this.children[t];
+		if(child.invokeAction && child.invokeAction(this,event)) {
+			handled = true;
+		}
+	}
+	return handled;
 };
 
 exports.widget = Widget;

@@ -1,8 +1,9 @@
 created: 20131205155230596
 modified: 20130706185813974
-tags: wikitext
+tags: WikiText
 title: Linking in WikiText
 type: text/vnd.tiddlywiki
+caption: Linking
 
 A key capability of WikiText is the ability to make links to other tiddlers or to external websites.
 
@@ -42,9 +43,9 @@ http://tiddlywiki.com/
 For this syntax to work, the URL has to be recognisable as an URL, including a protocol such as `http://` or `file://`. You can force an external link with the extended syntax:
 
 ```
-[ext[tiddlywiki.com]]
+[ext[http://tiddlywiki.com]]
 
-[ext[caption for link|tiddlywiki.com]]
+[ext[caption for link|http://tiddlywiki.com]]
 
 [ext[Donate|bitcoin:1aabbdd....?amount=0.001]]
 ```

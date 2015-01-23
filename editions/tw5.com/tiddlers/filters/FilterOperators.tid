@@ -1,12 +1,17 @@
 created: 20140410103123179
-modified: 20140410103123179
-tags: concepts
+modified: 20141007213204936
+tags: Concepts
 title: FilterOperators
 type: text/vnd.tiddlywiki
 
-\define bulletList(filter)
-<ul><$list filter="$filter$"><li><$link to={{!!title}}><$view field="title"/></$link></li></$list></ul>
-\end
-The full list of available filter operators is:
+A <<doc-def "filter operator">> is a predefined name attached to an individual step in a [[filter|Filters]]. It defines how that step is to be performed.
 
-<<bulletList "[tag[filters]]">>
+A typical step is written as `[operator[parameter]]`, although not all of the operators need a parameter.
+
+Here are the most commonly used operators:
+
+<<list-links "[tag[CommonFilters]]">>
+
+The complete list is:
+
+<<list-links "[tag[Filters]] -[[Introduction to filter notation]] -[[Filter Syntax]]">>

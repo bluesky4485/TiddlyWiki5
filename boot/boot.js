@@ -4,20 +4,7 @@ type: application/javascript
 
 The main boot kernel for TiddlyWiki. This single file creates a barebones TW environment that is just sufficient to bootstrap the modules containing the main logic of the application.
 
-On the server this file is executed directly to boot TiddlyWiki. In the browser, this file is packed into a single HTML file along with other elements:
-
-# bootprefix.js
-# <module definitions>
-# boot.js
-
-The module definitions on the browser look like this:
-
-	$tw.defineModule("MyModule","moduletype",function(module,exports,require) {
-	// Module code inserted here
-	return exports;
-	});
-
-In practice, each module is wrapped in a separate script block.
+On the server this file is executed directly to boot TiddlyWiki. In the browser, this file is packed into a single HTML file.
 
 \*/
 
@@ -75,14 +62,22 @@ $tw.utils.isDate = function(value) {
 Iterate through all the own properties of an object or array. Callback is invoked with (element,title,object)
 */
 $tw.utils.each = function(object,callback) {
-	var f;
+	var next,f;
 	if(object) {
 		if(Object.prototype.toString.call(object) == "[object Array]") {
-			object.forEach(callback);
+			for (f=0; f<object.length; f++) {
+				next = callback(object[f],f,object);
+				if(next === false) {
+					break;
+				}
+		    }
 		} else {
 			for(f in object) {
 				if(Object.prototype.hasOwnProperty.call(object,f)) {
-					callback(object[f],f,object);
+					next = callback(object[f],f,object);
+					if(next === false) {
+						break;
+					}
 				}
 			}
 		}
@@ -134,7 +129,7 @@ $tw.utils.error = function(err) {
 	var errHeading = "Internal JavaScript Error",
 		promptMsg = "Well, this is embarrassing. It is recommended that you restart TiddlyWiki by refreshing your browser";
 	// Log the error to the console
-	console.error(err);
+	console.error($tw.node ? "\x1b[1;31m" + err + "\x1b[0m" : err);
 	if($tw.browser && !$tw.node) {
 		// Display an error message to the user
 		var dm = $tw.utils.domMaker,
@@ -367,21 +362,20 @@ Returns true if the version string A is greater than the version string B. Retur
 */
 $tw.utils.checkVersions = function(versionStringA,versionStringB) {
 	var defaultVersion = {
-			major: 0,
-			minor: 0,
-			patch: 0
-		},
-		versionA = $tw.utils.parseVersion(versionStringA) || defaultVersion,
-		versionB = $tw.utils.parseVersion(versionStringB) || defaultVersion,
-		diff = [
-			versionA.major - versionB.major,
-			versionA.minor - versionB.minor,
-			versionA.patch - versionB.patch
-		];
+		major: 0,
+		minor: 0,
+		patch: 0
+	},
+	versionA = $tw.utils.parseVersion(versionStringA) || defaultVersion,
+	versionB = $tw.utils.parseVersion(versionStringB) || defaultVersion,
+	diff = [
+		versionA.major - versionB.major,
+		versionA.minor - versionB.minor,
+		versionA.patch - versionB.patch
+	];
 	return (diff[0] > 0) ||
 		(diff[0] === 0 && diff[1] > 0) ||
-		(diff[0] === 0 && diff[1] === 0 && diff[2] > 0) ||
-		(diff[0] === 0 && diff[1] === 0 && diff[2] === 0);
+		(diff[0] === 0 && diff[1] === 0 && diff[2] > 0);
 };
 
 /*
@@ -392,7 +386,14 @@ options: {flags: flags,deserializerType: deserializerType}
 */
 $tw.utils.registerFileType = function(type,encoding,extension,options) {
 	options = options || {};
-	$tw.config.fileExtensionInfo[extension] = {type: type};
+	if($tw.utils.isArray(extension)) {
+		$tw.utils.each(extension,function(extension) {
+			$tw.config.fileExtensionInfo[extension] = {type: type};
+		});
+		extension = extension[0];
+	} else {
+		$tw.config.fileExtensionInfo[extension] = {type: type};
+	}
 	$tw.config.contentTypeInfo[type] = {encoding: encoding, extension: extension, flags: options.flags || [], deserializerType: options.deserializerType || type};
 };
 
@@ -419,7 +420,7 @@ $tw.utils.evalGlobal = function(code,context,filename) {
 		contextValues.push(value);
 	});
 	// Add the code prologue and epilogue
-	code = "(function(" + contextNames.join(",") + ") {(function(){\n" + code + ";})();\nreturn exports;\n})\n";
+	code = "(function(" + contextNames.join(",") + ") {(function(){\n" + code + "\n;})();\nreturn exports;\n})\n";
 	// Compile the code into a function
 	var fn;
 	if($tw.browser) {
@@ -470,6 +471,7 @@ submitText: text to use for submit button (defaults to "Login")
 serviceName: text of the human readable service name
 noUserName: set true to disable username prompt
 canCancel: set true to enable a cancel button (callback called with null)
+repeatPassword: set true to prompt for the password twice
 callback: function to be called on submission with parameter of object {username:,password:}. Callback must return `true` to remove the password prompt
 */
 $tw.utils.PasswordPrompt.prototype.createPrompt = function(options) {
@@ -486,6 +488,11 @@ $tw.utils.PasswordPrompt.prototype.createPrompt = function(options) {
 	children.push(dm("input",{
 		attributes: {type: "password", name: "password", placeholder: "Password"}
 	}));
+	if(options.repeatPassword) {
+		children.push(dm("input",{
+			attributes: {type: "password", name: "password2", placeholder: "Repeat password"}
+		}));
+	}
 	if(options.canCancel) {
 		children.push(dm("button",{
 			text: "Cancel",
@@ -520,18 +527,23 @@ $tw.utils.PasswordPrompt.prototype.createPrompt = function(options) {
 				data[element.name] = element.value;
 			}
 		});
-		// Call the callback
-		if(options.callback(data)) {
-			// Remove the prompt if the callback returned true
-			self.removePrompt(promptInfo);
+		// Check that the passwords match
+		if(options.repeatPassword && data.password !== data.password2) {
+			alert("Passwords do not match");
 		} else {
-			// Clear the password if the callback returned false
-			$tw.utils.each(form.elements,function(element) {
-				if(element.name === "password") {
-					element.value = "";
-				}
-			});
-		}
+			// Call the callback
+			if(options.callback(data)) {
+				// Remove the prompt if the callback returned true
+				self.removePrompt(promptInfo);
+			} else {
+				// Clear the password if the callback returned false
+				$tw.utils.each(form.elements,function(element) {
+					if(element.name === "password" || element.name === "password2") {
+						element.value = "";
+					}
+				});
+			}
+		} 
 		event.preventDefault();
 		return false;
 	},true);
@@ -682,7 +694,7 @@ $tw.modules.execute = function(moduleName,moduleRoot) {
 				moduleInfo.exports = moduleInfo.definition;
 			}
 		} catch(e) {
-			$tw.utils.error("Error executing boot module " + name + ":\n" + e);
+			$tw.utils.error("Error executing boot module " + name + ":\n" + e.stack);
 		}
 	}
 	// Return the exports of the module
@@ -925,7 +937,7 @@ $tw.Wiki = function(options) {
 
 	};
 
-	// Test for the existence of a tiddler
+	// Test for the existence of a tiddler (excludes shadow tiddlers)
 	this.tiddlerExists = function(title) {
 		return !!$tw.utils.hop(tiddlers,title);
 	};
@@ -1103,7 +1115,7 @@ $tw.Wiki.prototype.processSafeMode = function() {
 	// Assemble a report tiddler
 	var titleReportTiddler = "TiddlyWiki Safe Mode",
 		report = [];
-	report.push("TiddlyWiki has been started in [[safe mode|http://tiddlywiki.com/static/SafeMode.html]]. Most customisations have been disabled by renaming the following tiddlers:")
+	report.push("TiddlyWiki has been started in [[safe mode|http://tiddlywiki.com/static/SafeMode.html]]. All plugins are temporarily disabled. Most customisations have been disabled by renaming the following tiddlers:")
 	// Delete the overrides
 	overrides.forEach(function(title) {
 		var tiddler = self.getTiddler(title),
@@ -1237,10 +1249,14 @@ Decrypt any tiddlers stored within the element with the ID "encryptedArea". The 
 $tw.boot.decryptEncryptedTiddlers = function(callback) {
 	var encryptedArea = document.getElementById("encryptedStoreArea");
 	if(encryptedArea) {
-		var encryptedText = encryptedArea.innerHTML;
+		var encryptedText = encryptedArea.innerHTML,
+			prompt = "Enter a password to decrypt this TiddlyWiki";
 		// Prompt for the password
+		if($tw.utils.hop($tw.boot,"encryptionPrompts")) {
+			prompt = $tw.boot.encryptionPrompts.decrypt;
+		}
 		$tw.passwordPrompt.createPrompt({
-			serviceName: "Enter a password to decrypt this TiddlyWiki",
+			serviceName: prompt,
 			noUserName: true,
 			submitText: "Decrypt",
 			callback: function(data) {
@@ -1520,7 +1536,7 @@ $tw.getLibraryItemSearchPaths = function(libraryPath,envVar) {
 	var pluginPaths = [path.resolve($tw.boot.corePath,libraryPath)],
 		env = process.env[envVar];
 	if(env) {
-		Array.prototype.push.apply(pluginPaths,env.split(":"));
+		Array.prototype.push.apply(pluginPaths,env.split(path.delimiter));
 	}
 	return pluginPaths;
 };
@@ -1541,11 +1557,14 @@ $tw.loadPlugins = function(plugins,libraryPath,envVar) {
 
 /*
 path: path of wiki directory
-parentPaths: array of parent paths that we mustn't recurse into
+options:
+	parentPaths: array of parent paths that we mustn't recurse into
+	readOnly: true if the tiddler file paths should not be retained
 */
-$tw.loadWikiTiddlers = function(wikiPath,parentPaths) {
-	parentPaths = parentPaths || [];
-	var wikiInfoPath = path.resolve(wikiPath,$tw.config.wikiInfo),
+$tw.loadWikiTiddlers = function(wikiPath,options) {
+	options = options || {};
+	var parentPaths = options.parentPaths || [],
+		wikiInfoPath = path.resolve(wikiPath,$tw.config.wikiInfo),
 		wikiInfo,
 		pluginFields;
 	// Bail if we don't have a wiki info file
@@ -1558,10 +1577,18 @@ $tw.loadWikiTiddlers = function(wikiPath,parentPaths) {
 	if(wikiInfo.includeWikis) {
 		parentPaths = parentPaths.slice(0);
 		parentPaths.push(wikiPath);
-		$tw.utils.each(wikiInfo.includeWikis,function(includedWikiPath) {
-			var resolvedIncludedWikiPath = path.resolve(wikiPath,includedWikiPath);
+		$tw.utils.each(wikiInfo.includeWikis,function(info) {
+			if(typeof info === "string") {
+				info = {path: info};
+			}
+			var resolvedIncludedWikiPath = path.resolve(wikiPath,info.path);
 			if(parentPaths.indexOf(resolvedIncludedWikiPath) === -1) {
-				$tw.loadWikiTiddlers(resolvedIncludedWikiPath,parentPaths);
+				var subWikiInfo = $tw.loadWikiTiddlers(resolvedIncludedWikiPath,{
+					parentPaths: parentPaths,
+					readOnly: info["read-only"]
+				});
+				// Merge the build targets
+				wikiInfo.build = $tw.utils.extend([],subWikiInfo.build,wikiInfo.build);
 			} else {
 				$tw.utils.error("Cannot recursively include wiki " + resolvedIncludedWikiPath);
 			}
@@ -1574,7 +1601,7 @@ $tw.loadWikiTiddlers = function(wikiPath,parentPaths) {
 	// Load the wiki files, registering them as writable
 	var resolvedWikiPath = path.resolve(wikiPath,$tw.config.wikiTiddlersSubDir);
 	$tw.utils.each($tw.loadTiddlersFromPath(resolvedWikiPath),function(tiddlerFile) {
-		if(tiddlerFile.filepath) {
+		if(!options.readOnly && tiddlerFile.filepath) {
 			$tw.utils.each(tiddlerFile.tiddlers,function(tiddler) {
 				$tw.boot.files[tiddler.title] = {
 					filepath: tiddlerFile.filepath,
@@ -1688,7 +1715,8 @@ $tw.boot.startup = function(options) {
 			themesEnvVar: "TIDDLYWIKI_THEME_PATH",
 			languagesEnvVar: "TIDDLYWIKI_LANGUAGE_PATH",
 			editionsEnvVar: "TIDDLYWIKI_EDITION_PATH"
-		}
+		},
+		log: {} // Log flags
 	});
 	if(!$tw.boot.tasks.readBrowserTiddlers) {
 		// For writable tiddler files, a hashmap of title to {filepath:,type:,hasMetaFile:}
@@ -1724,19 +1752,21 @@ $tw.boot.startup = function(options) {
 	$tw.utils.registerFileType("text/vnd.tiddlywiki2-recipe","utf8",".recipe");
 	$tw.utils.registerFileType("text/plain","utf8",".txt");
 	$tw.utils.registerFileType("text/css","utf8",".css");
-	$tw.utils.registerFileType("text/html","utf8",".html");
-	$tw.config.fileExtensionInfo[".htm"] = {type: "text/html"};
-	$tw.config.fileExtensionInfo[".hta"] = {type: "text/html"};
+	$tw.utils.registerFileType("text/html","utf8",[".html",".htm"]);
 	$tw.utils.registerFileType("application/hta","utf16le",".hta",{deserializerType:"text/html"});
 	$tw.utils.registerFileType("application/javascript","utf8",".js");
 	$tw.utils.registerFileType("application/json","utf8",".json");
 	$tw.utils.registerFileType("application/pdf","base64",".pdf",{flags:["image"]});
-	$tw.utils.registerFileType("image/jpeg","base64",".jpg",{flags:["image"]});
+	$tw.utils.registerFileType("image/jpeg","base64",[".jpg",".jpeg"],{flags:["image"]});
 	$tw.utils.registerFileType("image/png","base64",".png",{flags:["image"]});
 	$tw.utils.registerFileType("image/gif","base64",".gif",{flags:["image"]});
 	$tw.utils.registerFileType("image/svg+xml","utf8",".svg",{flags:["image"]});
 	$tw.utils.registerFileType("image/x-icon","base64",".ico",{flags:["image"]});
 	$tw.utils.registerFileType("application/font-woff","base64",".woff");
+	$tw.utils.registerFileType("audio/ogg","base64",".ogg");
+	$tw.utils.registerFileType("audio/mp3","base64",".mp3");
+	$tw.utils.registerFileType("audio/mp4","base64",[".mp4",".m4a"]);
+	$tw.utils.registerFileType("text/x-markdown","utf8",[".md",".markdown"]);
 	// Create the wiki store for the app
 	$tw.wiki = new $tw.Wiki();
 	// Install built in tiddler fields modules
@@ -1752,7 +1782,7 @@ $tw.boot.startup = function(options) {
 	}
 	// Unpack plugin tiddlers
 	$tw.wiki.readPluginInfo();
-	$tw.wiki.registerPluginTiddlers("plugin");
+	$tw.wiki.registerPluginTiddlers("plugin",$tw.safeMode ? ["$:/core"] : undefined);
 	$tw.wiki.unpackPluginTiddlers();
 	// Process "safe mode"
 	if($tw.safeMode) {
@@ -1874,6 +1904,35 @@ $tw.boot.isStartupTaskEligible = function(taskModule) {
 		}
 	}
 	return true;
+};
+
+/*
+Global Hooks mechanism which allows plugins to modify default functionality
+*/
+$tw.hooks = $tw.hooks || { names: {}};
+ 
+/*
+Add hooks to the  hashmap 
+*/
+$tw.hooks.addHook = function(hookName,definition) {
+	if($tw.utils.hop($tw.hooks.names,hookName)) {
+		$tw.hooks.names[hookName].push(definition);
+	}
+	else {
+		$tw.hooks.names[hookName] = [definition];
+	}
+};
+ 
+/*
+Invoke the hook by key 
+*/
+$tw.hooks.invokeHook = function(hookName, value) {
+	if($tw.utils.hop($tw.hooks.names,hookName)) {
+		for (var i = 0; i < $tw.hooks.names[hookName].length; i++) {
+			value = $tw.hooks.names[hookName][i](value);
+		}
+	}
+	return value;
 };
 
 /////////////////////////// Main boot function to decrypt tiddlers and then startup

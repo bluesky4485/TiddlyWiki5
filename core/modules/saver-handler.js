@@ -32,22 +32,24 @@ function SaverHandler(options) {
 	if($tw.browser && this.dirtyTracking) {
 		// Compile the dirty tiddler filter
 		this.filterFn = this.wiki.compileFilter(this.wiki.getTiddlerText(this.titleSyncFilter));
-		// Count of tiddlers that have been changed but not yet saved
-		this.numTasksInQueue = 0;
+		// Count of changes that have not yet been saved
+		this.numChanges = 0;
 		// Listen out for changes to tiddlers
 		this.wiki.addEventListener("change",function(changes) {
+			// Filter the changes so that we only count changes to tiddlers that we care about
 			var filteredChanges = self.filterFn.call(self.wiki,function(callback) {
 				$tw.utils.each(changes,function(change,title) {
 					var tiddler = self.wiki.getTiddler(title);
 					callback(tiddler,title);
 				});
 			});
-			self.numTasksInQueue += filteredChanges.length;
+			// Adjust the number of changes
+			self.numChanges += filteredChanges.length;
 			self.updateDirtyStatus();
 			// Do any autosave if one is pending and there's no more change events
 			if(self.pendingAutoSave && self.wiki.getSizeOfTiddlerEventQueue() === 0) {
 				// Check if we're dirty
-				if(self.numTasksInQueue > 0) {
+				if(self.numChanges > 0) {
 					self.saveWiki({
 						method: "autosave",
 						downloadType: "text/plain"
@@ -57,11 +59,11 @@ function SaverHandler(options) {
 			}
 		});
 		// Listen for the autosave event
-		$tw.rootWidget.addEventListener("tw-auto-save-wiki",function(event) {
+		$tw.rootWidget.addEventListener("tm-auto-save-wiki",function(event) {
 			// Do the autosave unless there are outstanding tiddler change events
 			if(self.wiki.getSizeOfTiddlerEventQueue() === 0) {
 				// Check if we're dirty
-				if(self.numTasksInQueue > 0) {
+				if(self.numChanges > 0) {
 					self.saveWiki({
 						method: "autosave",
 						downloadType: "text/plain"
@@ -73,28 +75,30 @@ function SaverHandler(options) {
 			}
 		});
 		// Set up our beforeunload handler
-		window.addEventListener("beforeunload",function(event) {
+		window.onbeforeunload = function(event) {
 			var confirmationMessage;
 			if(self.isDirty()) {
 				confirmationMessage = $tw.language.getString("UnsavedChangesWarning");
 				event.returnValue = confirmationMessage; // Gecko
 			}
 			return confirmationMessage;
-		});
+		};
 	}
 	// Install the save action handlers
 	if($tw.browser) {
 		$tw.rootWidget.addEventListener("tm-save-wiki",function(event) {
 			self.saveWiki({
 				template: event.param,
-				downloadType: "text/plain"
+				downloadType: "text/plain",
+				variables: event.paramObject
 			});
 		});
 		$tw.rootWidget.addEventListener("tm-download-file",function(event) {
 			self.saveWiki({
 				method: "download",
 				template: event.param,
-				downloadType: "text/plain"
+				downloadType: "text/plain",
+				variables: event.paramObject
 			});
 		});
 	}
@@ -141,16 +145,17 @@ SaverHandler.prototype.saveWiki = function(options) {
 	options = options || {};
 	var self = this,
 		method = options.method || "save",
+		variables = options.variables || {},
 		template = options.template || "$:/core/save/all",
 		downloadType = options.downloadType || "text/plain",
-		text = this.wiki.renderTiddler(downloadType,template),
+		text = this.wiki.renderTiddler(downloadType,template,options),
 		callback = function(err) {
 			if(err) {
 				alert("Error while saving:\n\n" + err);
 			} else {
 				// Clear the task queue if we're saving (rather than downloading)
 				if(method !== "download") {
-					self.numTasksInQueue = 0;
+					self.numChanges = 0;
 					self.updateDirtyStatus();
 				}
 				$tw.notifier.display(self.titleSavedNotification);
@@ -166,7 +171,7 @@ SaverHandler.prototype.saveWiki = function(options) {
 	// Call the highest priority saver that supports this method
 	for(var t=this.savers.length-1; t>=0; t--) {
 		var saver = this.savers[t];
-		if(saver.info.capabilities.indexOf(method) !== -1 && saver.save(text,method,callback)) {
+		if(saver.info.capabilities.indexOf(method) !== -1 && saver.save(text,method,callback,{variables: {filename: variables.filename}})) {
 			this.logger.log("Saving wiki with method",method,"through saver",saver.info.name);
 			return true;
 		}
@@ -178,7 +183,7 @@ SaverHandler.prototype.saveWiki = function(options) {
 Checks whether the wiki is dirty (ie the window shouldn't be closed)
 */
 SaverHandler.prototype.isDirty = function() {
-	return this.numTasksInQueue > 0;
+	return this.numChanges > 0;
 };
 
 /*

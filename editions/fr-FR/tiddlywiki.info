@@ -1,4 +1,5 @@
 {
+	"description": "French (France) edition",
 	"plugins": [
 	],
 	"themes": [
@@ -6,13 +7,15 @@
 		"tiddlywiki/snowwhite",
 		"tiddlywiki/nighttime",
 		"tiddlywiki/starlight",
-		"tiddlywiki/stickytitles",
 		"tiddlywiki/centralised",
 		"tiddlywiki/readonly"
 	],
 	"languages": [
 		"fr-FR"
 	],
+    "includeWikis": [
+        {"path": "../tw5.com", "read-only": true}
+    ],
 	"build": {
 		"index": [
 			"--rendertiddler","$:/core/save/all","fr-fr-demo.html","text/plain"]

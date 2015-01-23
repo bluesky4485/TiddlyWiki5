@@ -1,10 +1,12 @@
 created: 20140315085406905
 modified: 20140321084548184
-tags: resources
+tags: Resources
 title: "TiddlyWiki5 Coding" by Chris Hunt
 url: http://cjhunt.github.io/
 
 Chris Hunt's detailed developer tutorials for getting started with writing widgets for TiddlyWiki.
+
+{{!!url}}
 
 <<<
 These pages document aspects TiddlyWiki5 programming, sharing "lessons learned" to help developers to get started with TiddlyWiki5 customization and extension.

@@ -1,7 +1,7 @@
 title: UpgradeMechanism
 modified: 20140711090154150
 created: 20140711090154150
-tags: mechanism
+tags: Mechanisms
 
 # Open upgrade.html
 # Includes a data tiddler called `$:/UpgradeLibrary` that contains the latest compatible versions of all plugins in the library
@@ -21,18 +21,3 @@ tags: mechanism
 # Clicking "done" unpacks the selected tiddlers from the pending import tiddler
 # The pending import tiddler and the upgrade library tiddler are excluded from the subsequent save operation
 
-! ToDo
-
-* Incoming tiddler preview
-* ~~Better display text for plugins~~
-* ~~Better handling of encrypted upgrades~~
-* Docs
-* ~~Add upgrade plugin containing instructions and one-shot UI~~
-* ~~Suppressing $:/UpgradeLibrary and upgrade plugin from save~~
-* ~~Checkboxes~~
-* ~~Visual difference for suppressed tiddlers~~
-* Translation of upgrade wizard
-
-! NoToDo
-
-* Grouping plugins - not possible without extending the core

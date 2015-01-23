@@ -1,0 +1,13 @@
+created: 20141126153016142
+modified: 20141126153016142
+tags: Community
+title: Translate TiddlyWiki into your language
+type: text/vnd.tiddlywiki
+
+There is a special edition of TiddlyWiki that simplifies creating and maintaining translations:
+
+http://tiddlywiki.com/editions/translators/
+
+Note that no knowledge of Node.js or GitHub is required.
+
+See http://tiddlywiki.com/dev for technical details of creating and maintaining translations.
